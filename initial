@@ -1,0 +1,125 @@
+import pygame
+import random
+
+# Initialize pygame
+pygame.init()
+
+# Screen dimensions
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+
+# Paddle dimensions
+PADDLE_WIDTH = 10
+PADDLE_HEIGHT = 100
+
+# Ball dimensions
+BALL_SIZE = 20
+
+# Set up the display
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Mini Tennis Game")
+
+# Clock to control the game's frame rate
+clock = pygame.time.Clock()
+
+# Paddle class
+class Paddle:
+    def __init__(self, x, y, width, height, color):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.color = color
+        self.speed = 10
+
+    def move(self, y_change):
+        if 0 <= self.rect.y + y_change <= SCREEN_HEIGHT - self.rect.height:
+            self.rect.y += y_change
+
+    def draw(self):
+        pygame.draw.rect(screen, self.color, self.rect)
+
+# Ball class
+class Ball:
+    def __init__(self, x, y, size, color):
+        self.rect = pygame.Rect(x, y, size, size)
+        self.color = color
+        self.x_speed = random.choice([-7, 7])
+        self.y_speed = random.choice([-7, 7])
+
+    def move(self):
+        self.rect.x += self.x_speed
+        self.rect.y += self.y_speed
+
+    def draw(self):
+        pygame.draw.ellipse(screen, self.color, self.rect)
+
+    def reset(self):
+        self.rect.x = SCREEN_WIDTH // 2 - BALL_SIZE // 2
+        self.rect.y = SCREEN_HEIGHT // 2 - BALL_SIZE // 2
+        self.x_speed = random.choice([-7, 7])
+        self.y_speed = random.choice([-7, 7])
+
+# Function to display the score
+def display_score(score1, score2):
+    font = pygame.font.SysFont(None, 55)
+    text = font.render(f"{score1}  {score2}", True, WHITE)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 20))
+
+# Main game loop
+def game_loop():
+    paddle1 = Paddle(30, SCREEN_HEIGHT // 2 - PADDLE_HEIGHT // 2, PADDLE_WIDTH, PADDLE_HEIGHT, BLUE)
+    paddle2 = Paddle(SCREEN_WIDTH - 30 - PADDLE_WIDTH, SCREEN_HEIGHT // 2 - PADDLE_HEIGHT // 2, PADDLE_WIDTH, PADDLE_HEIGHT, RED)
+    ball = Ball(SCREEN_WIDTH // 2 - BALL_SIZE // 2, SCREEN_HEIGHT // 2 - BALL_SIZE // 2, BALL_SIZE, WHITE)
+
+    score1 = 0
+    score2 = 0
+
+    run = True
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w]:
+            paddle1.move(-paddle1.speed)
+        if keys[pygame.K_s]:
+            paddle1.move(paddle1.speed)
+        if keys[pygame.K_UP]:
+            paddle2.move(-paddle2.speed)
+        if keys[pygame.K_DOWN]:
+            paddle2.move(paddle2.speed)
+
+        ball.move()
+
+        if ball.rect.y <= 0 or ball.rect.y >= SCREEN_HEIGHT - BALL_SIZE:
+            ball.y_speed = -ball.y_speed
+
+        if ball.rect.colliderect(paddle1.rect) or ball.rect.colliderect(paddle2.rect):
+            ball.x_speed = -ball.x_speed
+
+        if ball.rect.x <= 0:
+            score2 += 1
+            ball.reset()
+
+        if ball.rect.x >= SCREEN_WIDTH - BALL_SIZE:
+            score1 += 1
+            ball.reset()
+
+        screen.fill(BLACK)
+        paddle1.draw()
+        paddle2.draw()
+        ball.draw()
+        display_score(score1, score2)
+
+        pygame.display.flip()
+        clock.tick(60)
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    game_loop()
